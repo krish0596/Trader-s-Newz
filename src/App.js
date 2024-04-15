@@ -4,7 +4,7 @@ import { Features } from "./pages/Features";
 import { Contact } from "./pages/Contact";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Navigation from "./Components/Navigation";
-
+import Footer from "./Components/Footer";
 import "./styles/styles.css";
 function App() {
   return (
@@ -15,11 +15,7 @@ function App() {
         <Route path="/features" element={<Features />} />
         <Route path="/contact" element={<Contact />} />
       </Routes>
-      <footer className="footer">
-        <div className="container" fixed="bottom">
-          <p>&copy; Trader's Newz.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
