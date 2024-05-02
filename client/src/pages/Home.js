@@ -21,14 +21,20 @@ export function Home() {
   };
 
   return (
-    <div className="home-div">
+    <div className="home-div" style={{margin:0, padding:0, top:0}}>
       <form onSubmit={handleSubmit}>
         <label>
-          Enter Stock Ticker:
+          Enter Stock :
           <input
             type="text"
             value={ticker}
             onChange={(e) => setTicker(e.target.value)}
+            placeholder="HDFC"
+            style={{
+              padding: "5px",
+              margin: "10px",
+              border: "1.6px solid black",
+            }}
           />
         </label>
         <button type="submit">Search</button>
