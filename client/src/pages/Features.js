@@ -1,7 +1,12 @@
+import Chart from "../Components/Chart";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
+
+
 export function Features() {
   return (
     <>
-      <h1>features</h1>
+      <Chart />
     </>
   );
 }

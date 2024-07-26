@@ -1,10 +1,14 @@
-const express =require('express')
-const app=express()
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const port = 5000; // or any other port number
+const articles = require("./src/routes/articles.js");
+const stockRoute = require("./src/routes/stock.js");
 
-app.get("/api",(req,res)=>{
-    res.json({"users":["userOne","userTwo","userThree"]})
-})
+app.use(cors());
+app.use("/", articles);
+app.use("/stock", stockRoute);
 
-app.listen(5000,()=>{
-    console.log("Server started on port 5000")
-})
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
