@@ -6,6 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Navigation from "./Components/Navigation";
 import Footer from "./Components/Footer";
 import Chart from "./Components/Chart";
+import StockSearch from "./Components/StockSearch";
 import "./styles/styles.css";
 function App() {
   return (

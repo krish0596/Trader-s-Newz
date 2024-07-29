@@ -1,7 +1,8 @@
+import StockSearch from "../Components/StockSearch";
 export function Contact() {
   return (
     <>
-      <h1>Contact</h1>
+      <StockSearch />
     </>
   );
 }

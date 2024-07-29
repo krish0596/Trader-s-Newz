@@ -39,7 +39,8 @@ router.post("/buy", async (req, res) => {
       "SELECT balance FROM users WHERE id = ?",
       [userId]
     );
-    if (user.balance < amount * price) {
+    //console.log(user[0].balance)
+    if (user[0].balance < amount * price) {
       return res.status(400).json({ error: "Insufficient balance" });
     }
 
@@ -49,10 +50,20 @@ router.post("/buy", async (req, res) => {
       userId,
     ]);
 
+    // Get stock ID from stock symbol
+    const [stock] = await pool.execute(
+      "SELECT id FROM stocks WHERE symbol = ?",
+      [stockId]
+    );
+    //console.log(stock[0].id)
+    if (!stock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+
     // Record trade
     await pool.execute(
       "INSERT INTO trades (user_id, stock_id, amount, price, action) VALUES (?, ?, ?, ?, 'buy')",
-      [userId, stockId, amount, price]
+      [userId, stock[0].id, amount, price]
     );
 
     res.json({ success: true });
@@ -66,10 +77,19 @@ router.post("/buy", async (req, res) => {
 router.post("/sell", async (req, res) => {
   const { userId, stockId, amount, price } = req.body;
   try {
+    // Get stock ID from stock symbol
+    const [stock] = await pool.execute(
+      "SELECT id FROM stocks WHERE symbol = ?",
+      [stockId]
+    );
+    //console.log(stock[0].id)
+    if (!stock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
     // Record trade
     await pool.execute(
       "INSERT INTO trades (user_id, stock_id, amount, price, action) VALUES (?, ?, ?, ?, 'sell')",
-      [userId, stockId, amount, price]
+      [userId, stock[0].id, amount, price]
     );
 
     // Update balance
