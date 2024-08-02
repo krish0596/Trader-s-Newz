@@ -104,4 +104,21 @@ router.post("/sell", async (req, res) => {
   }
 });
 
+// Get user's balance
+router.get("/balance", async (req, res) => {
+  const { userId } = req.body;
+  try {
+    const [user] = await pool.execute(
+      "SELECT balance FROM users WHERE id = 1"
+    );
+    if (user.length > 0) {
+      res.json({ balance: user[0].balance });
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching balance:", error);
+    res.status(500).send("Error fetching balance");
+  }
+});
 module.exports = router;
