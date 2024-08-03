@@ -14,39 +14,89 @@ const pool = mysql.createPool({
 });
 
 // Search stock by symbol
+// router.get("/search/:symbol", async (req, res) => {
+//   const { symbol } = req.params;
+//   //console.log(`Searching for symbol: ${symbol}`);
+//   try {
+//     const [rows] = await pool.execute("SELECT * FROM stocks WHERE symbol = ?", [
+//       symbol,
+//     ]);
+//     //console.log(rows);
+//     if (rows.length > 0) {
+//       console.log(rows)
+//       rest.stocks
+//         .previousClose(rows[0].symbol)
+//         .then((data) => {
+//           //console.log(data.results[0].c);
+//           res.json({
+//             symbol: rows[0].symbol,
+//             name: rows[0].name,
+//             price: data.results[0].c, // assuming this is the price from the rest.stocks.previousClose call
+//           });
+//         })
+//         .catch((e) => {
+//           console.log(e);
+//         });
+
+//     } else {
+//       res.status(404).json({ error: "Stock not found" });
+//     }
+//   } catch (error) {
+//     console.error("Error searching for stock:", error);
+//     res.status(500).send("Error searching for stock");
+//   }
+// });
+
 router.get("/search/:symbol", async (req, res) => {
   const { symbol } = req.params;
-  //console.log(`Searching for symbol: ${symbol}`);
+  const stockName = symbol.toUpperCase();
+  console.log(stockName);
+
   try {
-    const [rows] = await pool.execute("SELECT * FROM stocks WHERE symbol = ?", [
-      symbol,
-    ]);
-    //console.log(rows);
-    if (rows.length > 0) {
-      console.log(rows)
-      rest.stocks
-        .previousClose(rows[0].symbol)
-        .then((data) => {
-          //console.log(data.results[0].c);
-          res.json({
-            symbol: rows[0].symbol,
-            name: rows[0].name,
-            price: data.results[0].c, // assuming this is the price from the rest.stocks.previousClose call
-          });
-        })
-        .catch((e) => {
-          console.log(e);
-        });
-      
-    } else {
-      res.status(404).json({ error: "Stock not found" });
+    let stockDetails = "";
+    await fetch(
+      `https://api.polygon.io/v3/reference/tickers/${stockName}?apiKey=n_SMEdWeAOF30LiLCCLsfxLiqwTHIFCc`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        stockDetails = data.results.name;
+        console.log(stockDetails);
+      })
+      .catch((error) => console.error(error));
+
+    // Check if stock is real
+    if (!stockDetails) {
+      res.status(404).send("Stock not found");
+      return;
     }
+
+    // Check if stock exists in database
+    const [rows] = await pool.execute("SELECT * FROM stocks WHERE symbol = ?", [
+      stockName,
+    ]);
+    console.log(rows);
+    if (rows.length === 0) {
+      // Stock doesn't exist, insert it into the table
+      await pool.execute("INSERT INTO stocks (symbol, name) VALUES (?, ?)", [
+        stockName,
+        stockDetails,
+      ]);
+    }
+
+    // Fetch the price from rest.stocks
+    const priceData = await rest.stocks.previousClose(stockName);
+    const price = priceData.results[0].c;
+
+    res.json({
+      symbol: stockName,
+      name: stockDetails,
+      price: price,
+    });
   } catch (error) {
-    console.error("Error searching for stock:", error);
+    console.error(error);
     res.status(500).send("Error searching for stock");
   }
 });
-
 // Buy stock
 router.post("/buy", async (req, res) => {
   const { userId, stockId, amount, price } = req.body;
@@ -177,7 +227,8 @@ router.get("/balance", async (req, res) => {
 router.get("/holdings/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
-    const [holdings] = await pool.execute(`
+    const [holdings] = await pool.execute(
+      `
       SELECT 
         stock_id, 
         quantity
@@ -185,11 +236,13 @@ router.get("/holdings/:userId", async (req, res) => {
         user_stocks
       WHERE 
         user_id = ? AND quantity > 0
-    `, [userId]);
-      console.log(holdings)
+    `,
+      [userId]
+    );
+    console.log(holdings);
     if (holdings.length > 0) {
-      const stockIds = holdings.map(holding => holding.stock_id);
-      console.log(stockIds)
+      const stockIds = holdings.map((holding) => holding.stock_id);
+      console.log(stockIds);
       const [stocks] = await pool.execute(
         `
         SELECT 
@@ -204,13 +257,13 @@ router.get("/holdings/:userId", async (req, res) => {
         [stockIds]
       );
       console.log(stocks);
-      const holdingsWithStockInfo = holdings.map(holding => {
-        const stock = stocks.find(stock => stock.id === holding.stock_id);
+      const holdingsWithStockInfo = holdings.map((holding) => {
+        const stock = stocks.find((stock) => stock.id === holding.stock_id);
         return {
           stock_id: holding.stock_id,
           quantity: holding.quantity,
           symbol: stock.symbol,
-          name: stock.name
+          name: stock.name,
         };
       });
 
